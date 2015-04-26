@@ -1,0 +1,34 @@
+{
+  "name": "cluster-messaging",
+  "version": "0.0.0",
+  "description": "Messaging between master and worker processes using promises.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --harmony test",
+    "hint": "grunt hint",
+    "watch": "grunt watch"
+  },
+  "keywords": [
+    "cluster",
+    "message",
+    "messaging",
+    "promise",
+    "process"
+  ],
+  "author": "Eetu Latja",
+  "license": "MIT",
+  "devDependencies": {
+    "expect.js": "^0.3.1",
+    "grunt": "^0.4.5",
+    "grunt-clear": "^0.2.1",
+    "grunt-cli": "^0.1.13",
+    "grunt-contrib-jshint": "^0.11.2",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-mocha-test": "^0.12.7",
+    "jshint": "^2.7.0",
+    "mocha": "^2.2.4"
+  },
+  "dependencies": {
+    "q": "^1.2.1"
+  }
+}
