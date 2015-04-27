@@ -7,15 +7,25 @@ var expect = require('expect.js');
 
 describe('Cluster', function() {
 
-	it('Should be able to send message from cluster to worker and receive a response', function(done) {
+	it('Should be able to send message from master to worker and receive a response', function(done) {
 
-		var test1 = fork('test/test1');
+		var masterToWorkerTest = fork('test/master-to-worker');
 
-		test1.on('message', function(result) {
-			expect(result).to.be("this comes from worker");
+		masterToWorkerTest.on('message', function(result) {
+			expect(result).eql({ text: 'this comes from worker', number: 3 });
 			done();
 		});
 
+	});
+
+	it('Should be able to send message from worker to master and receive a response', function(done) {
+
+		var workerToMasterTest = fork('test/worker-to-master');
+
+		workerToMasterTest.on('message', function(result) {
+			expect(result).eql({ text: 'this comes from master', number: 5 });
+			done();
+		});
 	});
 
 });

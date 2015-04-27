@@ -1,5 +1,6 @@
 "use strict";
 
+var assert = require('assert');
 var cluster = require('cluster');
 
 var q = require('q');
@@ -7,27 +8,113 @@ var q = require('q');
 
 var messageId = 0;
 
+var handlers = {};
+
+
+function addHandler(workerId, name, handler) {
+	if (workerId === undefined) {
+		handlers[name] = handler;
+	}
+	else {
+		handlers[workerId][name] = handler;
+	}
+}
+
+// TODO when a worker dies, remove all listeners and handlers
+// associated with it
+
+function messageListener(processToListen) {
+	var processHandlers;
+
+	if (cluster.isMaster) {
+		if (handlers[processToListen.id]) {
+			// There is already a listener for this worker.
+			return;
+		}
+
+		processHandlers = handlers[processToListen.id] = {};
+	}
+	else {
+		processToListen = process;
+		processHandlers = handlers;
+	}
+
+	processToListen.on('message', function(ipcMessage) {
+
+		// TODO better routing
+		if (processHandlers[ipcMessage.name]) {
+
+			var message = {
+				data: ipcMessage.data,
+				respond: function(data) {
+					processToListen.send({
+						id: ipcMessage.id,
+						type: 'response',
+						data: data,
+					});
+				},
+				progress: function() {
+					// TODO progress signaling
+				},
+			};
+
+			processToListen.send({
+				id: ipcMessage.id,
+				type: 'received',
+			});
+
+			processHandlers[ipcMessage.name](message);
+		}
+		else {
+			// TODO send error: no registered handler
+		}
+		
+	});
+}
+
+
+if (cluster.isWorker) {
+	// Workers only need to listen to one process: master.
+	// Handle all IPC messages from master,
+	// then route them to handlers.
+	messageListener();
+}
+
 
 module.exports = {
 
-	emit: function(workerId, type, data) {
-		var deferred = q.defer();
+	// TODO no workerId when called from worker
+	emit: function(workerId, name, data) {
+		var receivedDeferred = q.defer();
 
 		// Generate ID for this message.
 		var id = ++messageId;
 
 		function _emit(processToMessage) {
+			var responseDeferred = q.defer();
+
 			var handler = function(ipcMessage) {
-				if (ipcMessage.id === id) {
+
+				if (ipcMessage.id === id && ipcMessage.type === 'received') {
+
+					var received = {
+						data: ipcMessage.data,
+						response: responseDeferred.promise,
+					};
+
+					receivedDeferred.resolve(received);
+				}
+				if (ipcMessage.id === id && ipcMessage.type === 'response') {
+					responseDeferred.resolve(ipcMessage.data);
 					processToMessage.removeListener('message', handler);
-					deferred.resolve(ipcMessage.data);
 				}
 			};
 
 			processToMessage.on('message', handler);
 
 			processToMessage.send({
-				type: type,
+				name: name,
+				type: 'request',
 				id: id,
 				data: data,
 			});
@@ -40,31 +127,18 @@ module.exports = {
 			_emit(process);
 		}
 
-		return deferred.promise;
+		return receivedDeferred.promise;
 	},
 
-	on: function(workerId, type, callback) {
-
-		function _on(processToListen) {
-			processToListen.on('message', function(ipcMessage) {
-
-				var sendResponse = function(data) {
-					processToListen.send({
-						id: ipcMessage.id,
-						data: data,
-					});
-				};
-
-				callback(ipcMessage.data, sendResponse);
-			});
-		}
+	// TODO no workerId when called from worker
+	on: function(workerId, name, callback) {
 
 		if (cluster.isMaster) {
-			_on(cluster.workers[workerId]);
+			assert(cluster.workers[workerId]);
+			messageListener(cluster.workers[workerId]);
 		}
-		else {
-			_on(process);
-		}
+
+		addHandler(workerId, name, callback);
 	},
 
 };

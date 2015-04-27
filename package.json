@@ -2,9 +2,14 @@
   "name": "cluster-messaging",
   "version": "0.0.0",
   "description": "Messaging between master and worker processes using promises.",
+  "author": "Eetu Latja <eetu.latja@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eetulatja/cluster-messaging"
+  },
   "main": "index.js",
   "scripts": {
-    "test": "mocha --harmony test",
+    "test": "grunt mochaTest",
     "hint": "grunt hint",
     "watch": "grunt watch"
   },
@@ -15,7 +20,6 @@
     "promise",
     "process"
   ],
-  "author": "Eetu Latja",
   "license": "MIT",
   "devDependencies": {
     "expect.js": "^0.3.1",
