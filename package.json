@@ -1,6 +1,6 @@
 {
   "name": "cluster-messaging",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Messaging between master and worker processes using promises.",
   "author": "Eetu Latja <eetu.latja@gmail.com>",
   "repository": {
