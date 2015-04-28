@@ -85,13 +85,14 @@ module.exports = {
 
 	// TODO no workerId when called from worker
 	emit: function(workerId, name, data) {
+		// var receivedDeferred = q.defer();
+		var responseDeferred = q.defer();
 		var receivedDeferred = q.defer();
 
 		// Generate ID for this message.
 		var id = ++messageId;
 
 		function _emit(processToMessage) {
-			var responseDeferred = q.defer();
 
 			var handler = function(ipcMessage) {
 
@@ -99,7 +100,7 @@ module.exports = {
 
 					var received = {
 						data: ipcMessage.data,
-						response: responseDeferred.promise,
+						// response: responseDeferred.promise,
 					};
 
 					receivedDeferred.resolve(received);
@@ -127,7 +128,9 @@ module.exports = {
 			_emit(process);
 		}
 
-		return receivedDeferred.promise;
+		responseDeferred.promise.received = receivedDeferred.promise;
+
+		return responseDeferred.promise;
 	},
 
 	// TODO no workerId when called from worker
@@ -139,6 +142,20 @@ module.exports = {
 		}
 
 		addHandler(workerId, name, callback);
+	},
+
+	broadcast: function(name, data) {
+		if (!cluster.isMaster) {
+			throw Error('Only master process can call broadcast().');
+		}
+
+		var emitPromises = [];
+
+		for (var workerId in cluster.workers) {
+			emitPromises.push(module.exports.emit(workerId, name, data));
+		}
+
+		return q.all(emitPromises);
 	},
 
 };

@@ -7,9 +7,11 @@ var messaging = require('..');
 
 if (cluster.isMaster) {
 
-	var worker = cluster.fork();
+	for (var i = 0; i < 2; i++) {
+		cluster.fork();
+	}
 
-	messaging.emit(worker.id, 'test', 3).then(function(data) {
+	messaging.broadcast('test', 3).then(function(data) {
 		process.send(data);
 		process.exit();
 	});

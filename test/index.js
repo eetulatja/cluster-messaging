@@ -28,4 +28,18 @@ describe('Cluster', function() {
 		});
 	});
 
+	it('Should be able to do a broadcast from master to workers and receive responses', function(done) {
+
+		var broadcastTest = fork('test/broadcast');
+
+		broadcastTest.on('message', function(result) {
+			expect(result).eql([
+				{ text: 'this comes from worker', number: 3 },
+				{ text: 'this comes from worker', number: 3 },
+			]);
+			done();
+		});
+
+	});
+
 });

@@ -21,7 +21,7 @@ if (cluster.isMaster) {
 }
 else {
 
-	messaging.emit(undefined, 'test', 5).get('response').then(function(data) {
+	messaging.emit(undefined, 'test', 5).then(function(data) {
 		messaging.emit(undefined, 'test.successful', data);
 	});
 	

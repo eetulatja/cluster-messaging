@@ -1,1 +1,3 @@
 ## Under construction...
+
+Messaging between master and workers using promises.
